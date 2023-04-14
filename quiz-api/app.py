@@ -6,8 +6,8 @@ CORS(app)
 
 @app.route('/')
 def hello_world():
-	x = 'world'
-	return f"Hello, {x}"
+	x = 'Ilyes'
+	return f"Qui a la pire coupe ? .... {x}"
 
 if __name__ == "__main__":
     app.run()
