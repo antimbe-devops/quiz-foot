@@ -1,19 +1,22 @@
 import sqlite3
+import json
+
 
 class Question:
-    def __init__(self, id=None, position=None, title=None, text=None, image=None):
+    def __init__(self, id=None, position=None, title=None, text=None, image=None, possibleAnswers=None):
         self.id = id
         self.position = position
         self.title = title
         self.text = text
         self.image = image
+        self.possibleAnswers = possibleAnswers
 
     def save(self):
         conn = sqlite3.connect('quizdb.db')
         c = conn.cursor()
-#       c.execute(f'INSERT INTO question (position, title, text, image) VALUES ({self.position}, "{self.title}", "{self.text}", "{self.image}")')
-        c.execute('''INSERT INTO question (position, title, text, image) VALUES (?, ?, ?, ?)''',
-                  (self.position, self.title, self.text, self.image))
+        possible_answers_json = json.dumps(self.possibleAnswers)  # Convertir en JSON
+        c.execute('''INSERT INTO question (position, title, text, image, possibleAnswers) VALUES (?, ?, ?, ?, ?)''',
+                  (self.position, self.title, self.text, self.image, possible_answers_json,))
         self.id = c.lastrowid
         conn.commit()
         conn.close()
@@ -28,7 +31,9 @@ class Question:
         if row is None:
             return None
         else:
-            return Question(*row)
+            question = Question(*row)
+            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            return question
 
     @staticmethod
     def get_by_position(position):
@@ -40,4 +45,204 @@ class Question:
         if row is None:
             return None
         else:
-            return Question(*row)
+            question = Question(*row)
+            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            return question
+
+
+
+    def update(self, position=None, title=None, text=None, image=None, possibleAnswers=None):
+        if position is not None:
+            self.position = position
+        if title is not None:
+            self.title = title
+        if text is not None:
+            self.text = text
+        if image is not None:
+            self.image = image
+        if possibleAnswers is not None:
+            self.possibleAnswers = possibleAnswers
+
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        possible_answers_json = json.dumps(self.possibleAnswers)  # Convertir en JSON
+        c.execute('''
+            UPDATE question
+            SET position=?, title=?, text=?, image=?, possibleAnswers=?
+            WHERE id=?
+        ''', (self.position, self.title, self.text, self.image, possible_answers_json, self.id))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_all():
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute("SELECT * FROM question")
+        rows = c.fetchall()
+        conn.close()
+
+        questions = []
+        for row in rows:
+            question = Question(*row)
+            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            questions.append(question)
+
+        return questions
+    
+
+
+    def delete(self):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''DELETE FROM question WHERE id=?''', (self.id,))
+        conn.commit()
+        conn.close()
+
+
+    @staticmethod
+    def delete_all():
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM question')
+        conn.commit()
+        conn.close()
+
+    def to_json(self):
+        return json.dumps({
+            "id": self.id,
+            "position": self.position,
+            "title": self.title,
+            "text": self.text,
+            "image": self.image,
+            "possibleAnswers": self.possibleAnswers
+        })
+    
+
+    
+class Answer:
+    def __init__(self, id=None, question_id=None, text=None, is_correct=None):
+        self.id = id
+        self.question_id = question_id
+        self.text = text
+        self.is_correct = is_correct
+
+    def save(self):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''INSERT INTO answer (question_id, text, is_correct) VALUES (?, ?, ?)''',
+                  (self.question_id, self.text, self.is_correct))
+        self.id = c.lastrowid
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_by_id(id):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''SELECT * FROM answer WHERE id=?''', (id,))
+        row = c.fetchone()
+        conn.close()
+        if row is None:
+            return None
+        else:
+            return Answer(*row)
+
+    @staticmethod
+    def get_by_question_id(question_id):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''SELECT * FROM answer WHERE question_id=?''', (question_id,))
+        rows = c.fetchall()
+        conn.close()
+        return [Answer(*row) for row in rows]
+
+    @staticmethod
+    def delete_by_question_id(question_id):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM answer WHERE question_id = ?', (question_id,))
+        conn.commit()
+        conn.close()
+
+    def to_json(self):
+        return json.dumps({
+            "id": self.id,
+            "question_id": self.question_id,
+            "text": self.text,
+            "is_correct": self.is_correct
+        })
+    
+class Participation:
+    def __init__(self, id=None, question_id=None, answer_id=None):
+        self.id = id
+        self.question_id = question_id
+        self.answer_id = answer_id
+
+    def save(self):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''INSERT INTO participation (question_id, answer_id) VALUES (?, ?)''',
+                  (self.question_id, self.answer_id))
+        self.id = c.lastrowid
+        conn.commit()
+        conn.close()
+
+    def delete(self):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM participation WHERE id=?', (self.id,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete_all():
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM participation')
+        conn.commit()
+        conn.close()
+
+class Score:
+    def __init__(self, id=None, participation_id=None, score=None):
+        self.id = id
+        self.participation_id = participation_id
+        self.score = score
+
+    def save(self):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''INSERT INTO score (participation_id, score) VALUES (?, ?)''',
+                  (self.participation_id, self.score))
+        self.id = c.lastrowid
+        conn.commit()
+        conn.close()
+
+    def calculate_quiz_score(answers):
+        total_score = 0
+
+        for answer in answers:
+            # Logique pour vérifier si la réponse de l'utilisateur est correcte
+            if answer['is_correct']:
+                # Ajouter des points si la réponse est correcte
+                total_score += 1
+
+        return total_score
+
+    @staticmethod
+    def get_by_user_id(user_id):
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('''SELECT score.id, score.participation_id, score.score
+                     FROM score INNER JOIN participation ON score.participation_id = participation.id
+                     WHERE participation.user_id=?''', (user_id,))
+        rows = c.fetchall()
+        conn.close()
+        return [Score(*row) for row in rows]
+
+    def to_json(self):
+        return json.dumps({
+            "id": self.id,
+            "participation_id": self.participation_id,
+            "score": self.score
+        })
