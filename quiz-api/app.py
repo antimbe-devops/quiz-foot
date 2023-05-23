@@ -18,7 +18,22 @@ def hello_world():
 
 @app.route('/quiz-info', methods=['GET'])
 def get_quiz_info():
-    return {"size":len(Question.get_all()) , "scores": []}, 200
+
+    conn=sqlite3.connect('quizdb.db')
+    c=conn.cursor()
+    c.execute("""SELECT playerName,score FROM participation ORDER BY score DESC;""")
+
+    scores= c.fetchall()
+
+    participant_info=[]
+
+    for score_participants in scores:
+        player_name = score_participants[0]
+        score = score_participants[1]
+        participant_info.append({'playerName': player_name, 'score': score})
+
+
+    return {"size":len(Question.get_all()) , "scores": participant_info,}, 200
  
 
 @app.route('/login', methods=['POST'])
@@ -78,6 +93,7 @@ def create_question():
         for answer_data in data['possibleAnswers']:
             answer = Answer(
                 question_id=question.id,
+                questionPosition=question.position,
                 text=answer_data['text'],
                 is_correct=answer_data['isCorrect']
             )
@@ -137,6 +153,8 @@ def delete_all():
         user_id = decode_token(token)
     except JwtError as e:
         return jsonify({'error': str(e)}), 401
+    
+    Answer.delete_all()
 
     Question.delete_all()
     return '', 204
@@ -163,8 +181,11 @@ def delete_question(question_id):
     
     # Get the position of the question to be deleted
     position_to_delete = question.position
-    
+
+    Answer.delete_by_question_id(question.id)
     question.delete()
+
+    
     
     # Decrement the positions of questions with positions greater than the deleted question
     for q in Question.get_all():
@@ -252,25 +273,37 @@ def update_question(question_id):
 
 @app.route('/participations', methods=['POST'])
 def create_participation():
+    """
     auth_header = request.headers.get('Authorization')
+    
     if not auth_header:
         return jsonify({'error': 'Unauthorized'}), 401
+   
     token = auth_header.split(' ')[1]
 
     try:
         user_id = decode_token(token)
     except JwtError as e:
         return jsonify({'error': str(e)}), 401
+     """
+    
 
     data = request.get_json()
+
+    if(len(data['answers'])<len(Question.get_all())):
+        return jsonify({'error': 'Not enough Answer'}), 400
+    
+    if(len(data['answers'])>len(Question.get_all())):
+        return jsonify({'error': 'Not enough Question'}), 400
+
     participation = Participation(
-        user_id=user_id,
-        question_id=data['questionId'],
-        answer_id=data['answerId']
-    )
+
+        playerName= data['playerName'],
+        answers= data['answers']
+)
     participation.save()
 
-    return jsonify({'id': participation.id}), 200
+    return jsonify({'playerName': participation.playerName, 'score':participation.score}), 200
 
 
 @app.route('/participations/all', methods=['DELETE'])

@@ -121,17 +121,18 @@ class Question:
 
     
 class Answer:
-    def __init__(self, id=None, question_id=None, text=None, is_correct=None):
+    def __init__(self, id=None, question_id=None, questionPosition=None,text=None, is_correct=None):
         self.id = id
         self.question_id = question_id
+        self.questionPosition=questionPosition
         self.text = text
         self.is_correct = is_correct
 
     def save(self):
         conn = sqlite3.connect('quizdb.db')
         c = conn.cursor()
-        c.execute('''INSERT INTO answer (question_id, text, is_correct) VALUES (?, ?, ?)''',
-                  (self.question_id, self.text, self.is_correct))
+        c.execute('''INSERT INTO answer (question_id,questionPosition, text, is_correct) VALUES (?,?, ?, ?)''',
+                  (self.question_id,self.questionPosition, self.text, self.is_correct))
         self.id = c.lastrowid
         conn.commit()
         conn.close()
@@ -165,6 +166,14 @@ class Answer:
         conn.commit()
         conn.close()
 
+    @staticmethod
+    def delete_all():
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM answer')
+        conn.commit()
+        conn.close()
+
     def to_json(self):
         return json.dumps({
             "id": self.id,
@@ -174,16 +183,42 @@ class Answer:
         })
     
 class Participation:
-    def __init__(self, id=None, question_id=None, answer_id=None):
+    def __init__(self, id=None, playerName=None,  answers=None, score=None):
         self.id = id
-        self.question_id = question_id
-        self.answer_id = answer_id
+        self.playerName = playerName
+        self.answers = answers
+        self.score = score
+
+    def calculate_quiz_score(self):
+        conn=sqlite3.connect('quizdb.db')
+        c=conn.cursor()
+        c.execute("""SELECT questionPosition,
+                        CASE 
+                            WHEN MIN(id)%4 = 0 THEN 4
+                            ELSE MIN(id)%4
+                        END AS goodAnswerPosition
+                    FROM answer
+                    WHERE is_correct = 1
+                    GROUP BY questionPosition;""")
+        
+        results= [row[1] for row in c.fetchall()]
+
+        score=0
+        for answer,result in zip(self.answers,results):
+                # Logique pour vérifier si la réponse de l'utilisateur est correcte
+                if answer==result:
+                    # Ajouter des points si la réponse est correcte
+                    score += 1
+         
+        self.score = score
 
     def save(self):
         conn = sqlite3.connect('quizdb.db')
+        print(self.playerName, self.answers)
         c = conn.cursor()
-        c.execute('''INSERT INTO participation (question_id, answer_id) VALUES (?, ?)''',
-                  (self.question_id, self.answer_id))
+        Participation.calculate_quiz_score(self)
+        c.execute('''INSERT INTO participation (playerName,  answers, score) VALUES ( ?, ?, ?)''',
+                  (self.playerName, json.dumps(self.answers),self.score,))
         self.id = c.lastrowid
         conn.commit()
         conn.close()
@@ -202,6 +237,16 @@ class Participation:
         c.execute('DELETE FROM participation')
         conn.commit()
         conn.close()
+
+    
+
+    def to_json(self):
+        return json.dumps({
+            "id": self.id,
+            "playerName": self.playerName,
+            "answers": json.dumps(self.answers),
+            "score":self.score
+        })
 
 class Score:
     def __init__(self, id=None, participation_id=None, score=None):
