@@ -14,7 +14,7 @@ class Question:
     def save(self):
         conn = sqlite3.connect('quizdb.db')
         c = conn.cursor()
-        possible_answers_json = json.dumps(self.possibleAnswers)  # Convertir en JSON
+        possible_answers_json = json.dumps(self.possibleAnswers)  
         c.execute('''INSERT INTO question (position, title, text, image, possibleAnswers) VALUES (?, ?, ?, ?, ?)''',
                   (self.position, self.title, self.text, self.image, possible_answers_json,))
         self.id = c.lastrowid
@@ -32,7 +32,7 @@ class Question:
             return None
         else:
             question = Question(*row)
-            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            question.possibleAnswers = json.loads(question.possibleAnswers)  
             return question
 
     @staticmethod
@@ -46,7 +46,7 @@ class Question:
             return None
         else:
             question = Question(*row)
-            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            question.possibleAnswers = json.loads(question.possibleAnswers) 
             return question
 
 
@@ -65,7 +65,7 @@ class Question:
 
         conn = sqlite3.connect('quizdb.db')
         c = conn.cursor()
-        possible_answers_json = json.dumps(self.possibleAnswers)  # Convertir en JSON
+        possible_answers_json = json.dumps(self.possibleAnswers)  
         c.execute('''
             UPDATE question
             SET position=?, title=?, text=?, image=?, possibleAnswers=?
@@ -85,7 +85,7 @@ class Question:
         questions = []
         for row in rows:
             question = Question(*row)
-            question.possibleAnswers = json.loads(question.possibleAnswers)  # Convertir en liste d'objets Python
+            question.possibleAnswers = json.loads(question.possibleAnswers)  
             questions.append(question)
 
         return questions
@@ -232,9 +232,9 @@ class Participation:
 
         score=0
         for answer,result in zip(self.answers,results):
-                # Logique pour vérifier si la réponse de l'utilisateur est correcte
+                
                 if answer==result:
-                    # Ajouter des points si la réponse est correcte
+                    
                     score += 1
          
         self.score = score
@@ -273,48 +273,4 @@ class Participation:
             "playerName": self.playerName,
             "answers": json.dumps(self.answers),
             "score":self.score
-        })
-
-class Score:
-    def __init__(self, id=None, participation_id=None, score=None):
-        self.id = id
-        self.participation_id = participation_id
-        self.score = score
-
-    def save(self):
-        conn = sqlite3.connect('quizdb.db')
-        c = conn.cursor()
-        c.execute('''INSERT INTO score (participation_id, score) VALUES (?, ?)''',
-                  (self.participation_id, self.score))
-        self.id = c.lastrowid
-        conn.commit()
-        conn.close()
-
-    def calculate_quiz_score(answers):
-        total_score = 0
-
-        for answer in answers:
-            # Logique pour vérifier si la réponse de l'utilisateur est correcte
-            if answer['is_correct']:
-                # Ajouter des points si la réponse est correcte
-                total_score += 1
-
-        return total_score
-
-    @staticmethod
-    def get_by_user_id(user_id):
-        conn = sqlite3.connect('quizdb.db')
-        c = conn.cursor()
-        c.execute('''SELECT score.id, score.participation_id, score.score
-                     FROM score INNER JOIN participation ON score.participation_id = participation.id
-                     WHERE participation.user_id=?''', (user_id,))
-        rows = c.fetchall()
-        conn.close()
-        return [Score(*row) for row in rows]
-
-    def to_json(self):
-        return json.dumps({
-            "id": self.id,
-            "participation_id": self.participation_id,
-            "score": self.score
         })

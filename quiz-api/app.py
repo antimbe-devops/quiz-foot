@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import hashlib
 from jwt_utils import build_token, decode_token, JwtError
-from questions import Question, Answer, Participation, Score
+from questions import Question, Answer, Participation
 import json
 
 app = Flask(__name__)
@@ -67,7 +67,6 @@ def create_question():
     data = request.get_json()
     new_position = data['position']
 
-    # Adjust positions if there is an existing question at the same position
     existing_question = Question.get_by_position(new_position)
     if existing_question:
         new_position = existing_question.position
@@ -180,7 +179,6 @@ def delete_question(question_id):
     if question is None:
         return jsonify({'error': 'Question not found'}), 404
     
-    # Get the position of the question to be deleted
     position_to_delete = question.position
 
     Answer.delete_by_question_id(question.id)
@@ -188,7 +186,6 @@ def delete_question(question_id):
 
     
     
-    # Decrement the positions of questions with positions greater than the deleted question
     for q in Question.get_all():
         if q.position > position_to_delete:
             q.position -= 1
@@ -226,17 +223,14 @@ def update_question(question_id):
     new_position = data['position']
 
     if new_position != question.position:
-        # If the new position is different from the current position
         old_position = question.position
 
         if new_position > old_position:
-            # If the new position is greater than the old position, increment the positions of questions in between
             for q in Question.get_all():
                 if q.id != question.id and old_position < q.position <= new_position:
                     q.position -= 1
                     q.update()
         else:
-            # If the new position is smaller than the old position, decrement the positions of questions in between
             for q in Question.get_all():
                 if q.id != question.id and new_position <= q.position < old_position:
                     q.position += 1
@@ -274,20 +268,6 @@ def update_question(question_id):
 
 @app.route('/participations', methods=['POST'])
 def create_participation():
-    """
-    auth_header = request.headers.get('Authorization')
-    
-    if not auth_header:
-        return jsonify({'error': 'Unauthorized'}), 401
-   
-    token = auth_header.split(' ')[1]
-
-    try:
-        user_id = decode_token(token)
-    except JwtError as e:
-        return jsonify({'error': str(e)}), 401
-     """
-    
 
     data = request.get_json()
 
@@ -350,19 +330,6 @@ def get_goodAnswers():
     return jsonify([goodAnswers]),200
 
 
-@app.route('/scores', methods=['GET'])
-def get_scores():
-
-    scores = Score.get_by_user_id(user_id)
-    scores_data = []
-    for score in scores:
-        scores_data.append({
-            'id': score.id,
-            'participation_id': score.participation_id,
-            'score': score.score
-        })
-
-    return jsonify({'scores': scores_data}), 200
 
 
 @app.route('/getscore', methods=['GET'])
