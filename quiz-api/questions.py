@@ -119,6 +119,51 @@ class Question:
         })
     
 
+
+    def rebuild_db():
+        conn = sqlite3.connect('quizdb.db')
+        c = conn.cursor()
+
+        c.execute("""CREATE TABLE "question" (
+            "id"	INTEGER,
+            "position"	INTEGER NOT NULL,
+            "title"	TEXT NOT NULL,
+            "text"	TEXT NOT NULL,
+            "image"	TEXT,
+            "possibleAnswers"	TEXT,
+            PRIMARY KEY("id")
+        );
+        """)
+
+        c.execute("""CREATE TABLE "answer" (
+            "id"	INTEGER,
+            "question_id"	INTEGER NOT NULL,
+            "questionPosition"	INTEGER,
+            "text"	TEXT NOT NULL,
+            "is_correct"	INTEGER NOT NULL,
+            PRIMARY KEY("id"),
+            FOREIGN KEY("questionPosition") REFERENCES "question"("position"),
+            FOREIGN KEY("question_id") REFERENCES "question"("id")
+        );
+        """)
+
+        c.execute("""CREATE TABLE "participation" (
+            "id"	INTEGER,
+            "answers"	TEXT,
+            "playerName"	TEXT,
+            "score"	INTEGER,
+            FOREIGN KEY("answers") REFERENCES "answer"("id"),
+            PRIMARY KEY("id")
+        );
+        """)
+
+
+
+
+        conn.commit()
+        conn.close()
+    
+
     
 class Answer:
     def __init__(self, id=None, question_id=None, questionPosition=None,text=None, is_correct=None):

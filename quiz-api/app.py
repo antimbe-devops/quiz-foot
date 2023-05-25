@@ -48,6 +48,20 @@ def login():
         return {'error': 'Unauthorized'}, 401
     
 
+@app.route('/rebuild-db',methods=['POST'])
+def db_rebuilder():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return jsonify({'error': 'Unauthorized'}), 401
+    token = auth_header.split(' ')[1]
+
+    try:
+        user_id = decode_token(token)
+    except JwtError as e:
+        return jsonify({'error': str(e)}), 401
+    
+    return Question.rebuild_db(), 200
+
 
 
 
