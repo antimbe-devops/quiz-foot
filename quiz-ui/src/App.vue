@@ -33,7 +33,6 @@ import { RouterLink, RouterView } from 'vue-router'
   padding: 10px;
   margin-bottom: 200px;
   z-index: 1;
-  /* Ajoutez cette ligne */
 }
 
 
@@ -63,23 +62,6 @@ nav {
   margin-right: 1rem;
 }
 
-/*
-.content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-.content::-webkit-scrollbar-thumb {
-  background: #888;
-}
-
-.content::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-*/
 
 nav {
   flex: 0;

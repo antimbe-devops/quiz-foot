@@ -32,7 +32,6 @@ export default {
 .home-page {
   text-align: center;
   margin-top: 100px;
-  /* Ajout d'une marge supérieure */
 }
 
 .score-entry {
@@ -49,7 +48,6 @@ export default {
   font-weight: bold;
 }
 
-/* Ajout des styles pour le header */
 .header {
   position: fixed;
   top: 0;

@@ -25,8 +25,6 @@ export default {
     launchNewQuiz() {
       const playerName = this.username;
       participationStorageService.savePlayerName(playerName);
-      console.log("Launch new quiz with", playerName);
-      // Redirection vers la première question du quiz
       this.$router.push('/questions');
     }
   }

@@ -52,7 +52,6 @@ export default defineComponent({
 
     async answerSelectedHandler(answerId) {
       if (this.currentQuestion) {
-        // Logique de traitement de la réponse sélectionnée
         this.answersSelected.push(answerId);
         this.currentQuestionPosition++;
 
@@ -84,15 +83,12 @@ export default defineComponent({
 
     async scoreHandler() {
       this.goodAnswers = await QuizApiService.getGoodAnswers();
-      // Supposons que les tableaux answers et results contiennent les réponses de l'utilisateur et les résultats respectivement
 
       for (let i = 0; i < this.answersSelected.length; i++) {
         const answerSelected = this.answersSelected[i];
         const goodAnswer = this.goodAnswers[i];
 
-        // Logique pour vérifier si la réponse de l'utilisateur est correcte
         if (answerSelected === goodAnswer) {
-          // Ajouter des points si la réponse est correcte
           this.finalScore += 1;
         }
       }
