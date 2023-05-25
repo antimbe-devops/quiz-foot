@@ -189,6 +189,33 @@ class Participation:
         self.answers = answers
         self.score = score
 
+    def getScore(username):
+        conn=sqlite3.connect('quizdb.db')
+        c=conn.cursor()
+        c.execute('''SELECT score FROM Participation WHERE playerName = ?''', (username,) )
+        usernames = c.fetchone()[0]
+
+        return usernames
+
+
+
+
+
+    def getGoodAnswers():
+        conn=sqlite3.connect('quizdb.db')
+        c=conn.cursor()
+        c.execute("""SELECT questionPosition,
+                        CASE 
+                            WHEN MIN(id)%4 = 0 THEN 4
+                            ELSE MIN(id)%4
+                        END AS goodAnswerPosition
+                    FROM answer
+                    WHERE is_correct = 1
+                    GROUP BY questionPosition;""")
+        
+        results= [row[1] for row in c.fetchall()]
+        return results
+
     def calculate_quiz_score(self):
         conn=sqlite3.connect('quizdb.db')
         c=conn.cursor()

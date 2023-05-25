@@ -127,6 +127,7 @@ def get_question(question_id):
 def get_question_by_position():
     position = request.args.get('position')
     question = Question.get_by_position(position)
+
     if question is None:
         return jsonify({'error': 'Question not found'}), 404
 
@@ -300,7 +301,7 @@ def create_participation():
 
         playerName= data['playerName'],
         answers= data['answers']
-)
+    )
     participation.save()
 
     return jsonify({'playerName': participation.playerName, 'score':participation.score}), 200
@@ -343,19 +344,14 @@ def delete_participation(participation_id):
 
 
 
+@app.route('/goodanswers', methods=['GET'])
+def get_goodAnswers():
+    goodAnswers = Participation.getGoodAnswers()
+    return jsonify([goodAnswers]),200
 
 
 @app.route('/scores', methods=['GET'])
 def get_scores():
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({'error': 'Unauthorized'}), 401
-    token = auth_header.split(' ')[1]
-
-    try:
-        user_id = decode_token(token)
-    except JwtError as e:
-        return jsonify({'error': str(e)}), 401
 
     scores = Score.get_by_user_id(user_id)
     scores_data = []
@@ -367,6 +363,13 @@ def get_scores():
         })
 
     return jsonify({'scores': scores_data}), 200
+
+
+@app.route('/getscore', methods=['GET'])
+def get_scores_user():
+    user= request.args.get('user')
+    return jsonify({'scores': Participation.getScore(user)}), 200
+
 
 if __name__ == "__main__":
     app.run()

@@ -22,7 +22,8 @@ export default {
   },
   async created() {
     console.log("Composant Home page 'created'");
-    this.registeredScores = await quizApiService.getRegisteredScores();
+    const obj = await quizApiService.getQuizInfo();
+    this.registeredScores = obj.data.scores;
   }
 };
 </script>
@@ -30,6 +31,8 @@ export default {
 <style>
 .home-page {
   text-align: center;
+  margin-top: 100px;
+  /* Ajout d'une marge supérieure */
 }
 
 .score-entry {
@@ -44,5 +47,19 @@ export default {
   text-decoration: none;
   border-radius: 5px;
   font-weight: bold;
+}
+
+/* Ajout des styles pour le header */
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #f8f8f8;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+  margin: 0;
 }
 </style>
