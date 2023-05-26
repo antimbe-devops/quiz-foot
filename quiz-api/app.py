@@ -60,7 +60,8 @@ def db_rebuilder():
     except JwtError as e:
         return jsonify({'error': str(e)}), 401
     
-    return Question.rebuild_db(), 200
+    Question.rebuild_db()
+    return 'Ok', 200
 
 
 
